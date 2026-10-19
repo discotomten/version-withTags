@@ -4,7 +4,9 @@ on:
   push:
     tags:
       - 'v*'
-
+permissions:
+  contents: write
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,3 +34,8 @@ jobs:
         with:
           name: hello-world-${{ env.VERSION }}
           path: out/
+
+      - name: Skapa release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" out/*.exe --title "$GITHUB_REF_NAME" --generate-notes
