@@ -1,15 +1,12 @@
-name: Release
+name: Release build
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-
-permissions:
-  contents: write   # krävs för att skapa releasen
+      - 'v*'
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,18 +19,16 @@ jobs:
       - name: Hämta version från taggen
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
-      - name: Publicera
+      - name: Bygg release
         run: |
-          dotnet publish -c Release -r linux-x64 --self-contained \
-            -p:PublishSingleFile=true -p:Version=$VERSION -o out/linux
           dotnet publish -c Release -r win-x64 --self-contained \
-            -p:PublishSingleFile=true -p:Version=$VERSION -o out/win
+            -p:PublishSingleFile=true \
+            -p:Version=$VERSION \
+            -p:FileVersion=$VERSION \
+            -o out
 
-      - name: Skapa release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" \
-            out/linux/* out/win/*.exe \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes
+      - name: Ladda upp artefakt
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-world-${{ env.VERSION }}
+          path: out/
